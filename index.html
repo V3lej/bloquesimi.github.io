@@ -166,7 +166,9 @@
     let ghostPiece = null;
     let draggedShape = null;
     let draggedColor = null;
+    let isTouching = false; // Variable para controlar los toques en dispositivos móviles
 
+    // Inicia el juego
     function startGame() {
       document.getElementById('menu').classList.remove('active');
       document.getElementById('game').classList.add('active');
@@ -250,34 +252,51 @@
         piece.appendChild(rowDiv);
       });
 
-      piece.addEventListener('pointerdown', e => {
-        draggedShape = shape;
-        draggedColor = color;
-
-        ghostPiece = piece.cloneNode(true);
-        ghostPiece.classList.add('drag-ghost');
-        document.body.appendChild(ghostPiece);
-
-        const move = ev => {
-          ghostPiece.style.left = `${ev.pageX}px`;
-          ghostPiece.style.top = `${ev.pageY}px`;
-          updateHighlights(ev);
-        };
-
-        const up = ev => {
-          document.removeEventListener('pointermove', move);
-          document.removeEventListener('pointerup', up);
-          tryPlacePiece(ev);
-          ghostPiece.remove();
-          ghostPiece = null;
-          clearHighlights();
-        };
-
-        document.addEventListener('pointermove', move);
-        document.addEventListener('pointerup', up);
-      });
+      piece.addEventListener('pointerdown', e => handlePieceStart(e, shape, color));
+      piece.addEventListener('touchstart', e => handlePieceStart(e, shape, color));
 
       return piece;
+    }
+
+    // Manejador de inicio de arrastre
+    function handlePieceStart(e, shape, color) {
+      if (e.type === "touchstart") {
+        e.preventDefault(); // Prevenir el comportamiento por defecto del toque
+        isTouching = true;
+      }
+
+      draggedShape = shape;
+      draggedColor = color;
+
+      ghostPiece = e.target.cloneNode(true);
+      ghostPiece.classList.add('drag-ghost');
+      document.body.appendChild(ghostPiece);
+
+      const move = ev => {
+        let pageX = e.type === "touchstart" ? ev.touches[0].pageX : ev.pageX;
+        let pageY = e.type === "touchstart" ? ev.touches[0].pageY : ev.pageY;
+
+        ghostPiece.style.left = `${pageX}px`;
+        ghostPiece.style.top = `${pageY}px`;
+        updateHighlights(ev);
+      };
+
+      const up = ev => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', up);
+
+        tryPlacePiece(ev);
+        ghostPiece.remove();
+        ghostPiece = null;
+        clearHighlights();
+      };
+
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('touchmove', move);
+      document.addEventListener('touchend', up);
     }
 
     function updateHighlights(e) {
