@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego bloques imi</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #2c3e50;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: start; /* <- Cambiado de center a start */
+      min-height: 100vh;
+      overflow-y: auto; /* <- Habilita el scroll vertical */
+      padding: 20px; /* Para que no quede pegado arriba */
+    }
+    #menu, #info, #game {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    #menu.active, #info.active, #game.active {
+      display: flex;
+    }
+    button {
+      background-color: #2980b9;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      font-size: 18px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 40px);
+      grid-template-rows: repeat(8, 40px);
+      gap: 2px;
+      margin: 20px 0;
+      position: relative;
+      z-index: 0;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #34495e;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .filled {
+      background-color: gray !important;
+    }
+    .highlight {
+      background-color: #95a5a6;
+    }
+    #pieces {
+      display: flex;
+      gap: 10px;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+    .piece {
+      display: inline-grid;
+      grid-auto-flow: row;
+      gap: 2px;
+      cursor: grab;
+      position: relative;
+    }
+    .block {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+    .yellow { background-color: #f1c40f; }
+    .green { background-color: #2ecc71; }
+    .blue { background-color: #3498db; }
+    .red { background-color: #e74c3c; }
+    #scoreDisplay {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .drag-ghost {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0.8;
+      z-index: 9999;
+    }
+    #no-moves {
+      display: none;
+      position: absolute;
+      top: 20px;
+      background-color: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu" class="active">
+    <h1>Block Puzzle</h1>
+    <button onclick="startGame()">Jugar</button>
+    <button onclick="showInfo()">Lee esto antes de jugar🙈</button>
+  </div>
+
+  <div id="info">
+    <h2>Para mi amor💜❤</h2>
+    <p id="customText">
+        Hola, mi vida, este jueguito trata de bloques como el Tetris y esas figuras como el juego que un día vi que estabas jugando cuando llegué al cole y estabas re eh eh eh, re happy jugándolo.
+    </p>
+    <img src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTiXLt-pZtDrfIJOJhcvh6pQ4_nlsf-yQ2ofkVkAxgYWiPao5fs" height="200" width="200" class="image" />
+    <p id="customText">
+        Entonces esta es como una versión a mi manera, jsj. Quise hacer este juego para ti porque últimamente has estado muy estresada y muy cansada por el colegio y las mil tareas que ponen.
+    </p>
+    <img src="https://pbs.twimg.com/media/Gmb4XQ_XEAAyWE4.jpg" height="200" width="200" class="image" />
+    <p id="customText">
+        Y la idea es que lo juegues cuando estés aburrida, estresada o quieras hacer otra cosita o así, solo un momento.
+    </p>
+    <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQ9fsxzACu49bjB8YVjVZeq85LblNU15g6pmtuKPG8T6CR6rnQ6" height="200" width="200" class="image" />
+    <p id="customText">
+        Sé que el juego no es el mejor del mundo, que no se ve tan lindo, tiene efectos y todo eso, no está tan bien programado como el original, pero lo hice con mucho amor para ti, y de prontooo podamos ver quién hace más puntos, y si te gusta el juego puedo agregarle muchas cosas para que sea tu juego favorito, ccc:
+    </p>
+    <img src="https://preview.redd.it/how-do-you-all-feel-about-oatchi-v0-06wnmr85bure1.jpeg?width=1170&format=pjpg&auto=webp&s=05a3f26dea7faae2cbe762675c1aed13a14a7c6c" height="200" width="200" class="image" />
+    <p id="customText">
+        Quiero que siempre recuerdes que te amo muchísimo, que siempre estaré para ti cuando lo necesites, que a veces puedo ser muy estresante, fastidioso y molesto, pero no es mi intención estresarte o eso, lo siento por eso. Te amo con todo mi corazón, mi amor, espero que te guste mucho tu juego y que hagas muchos puntos, mi niña preciosa, te amo y pásala liko.
+    </p>
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDSPw-IHnNMSuPC6KpU2Izk8D-H7IzebKL9Q&s" height="200" width="200" class="image" />
+    <button onclick="showMenu()">Volver🙊</button>
+</div>
+
+<style>
+    body {
+  overflow: auto;
+}
+
+  #info {
+    text-align: center;
+    margin: 20px;
+    padding: 20px;
+    background-color: #2c3e50;
+    border-radius: 10px;
+    color: white;
+  }
+
+  h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+  }
+
+  p {
+    font-size: 1.2em;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .image {
+    margin: 10px 0;
+    border-radius: 10px;
+  }
+
+  button {
+    font-size: 1em;
+    padding: 10px 20px;
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    margin-top: 20px;
+  }
+
+  button:hover {
+    background-color: #2980b9;
+  }
+</style>
+
+  <div id="game">
+    <div id="scoreDisplay">Puntos: <span id="score">0</span></div>
+    <div id="board"></div>
+    <div id="pieces"></div>
+    <button onclick="restartGame()">Reiniciar</button>
+    <button onclick="backToMenu()">Menú</button>
+    <div id="no-moves">NO HAY MAS MOVIMIENTOOOOS<br><button onclick="restartGame()">Reiniciar</button></div>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const piecesContainer = document.getElementById('pieces');
+    const scoreDisplay = document.getElementById('score');
+    const noMovesBox = document.getElementById('no-moves');
+    let score = 0;
+    const boardCells = [];
+    let ghostPiece = null;
+    let draggedShape = null;
+    let draggedColor = null;
+
+    function startGame() {
+      document.getElementById('menu').classList.remove('active');
+      document.getElementById('game').classList.add('active');
+      initBoard();
+      generatePieces();
+    }
+
+    function showInfo() {
+      document.getElementById('menu').classList.remove('active');
+      document.getElementById('info').classList.add('active');
+    }
+
+    function showMenu() {
+      document.getElementById('info').classList.remove('active');
+      document.getElementById('menu').classList.add('active');
+    }
+
+    function backToMenu() {
+      document.getElementById('game').classList.remove('active');
+      document.getElementById('menu').classList.add('active');
+    }
+
+    function restartGame() {
+      score = 0;
+      scoreDisplay.textContent = score;
+      board.innerHTML = '';
+      piecesContainer.innerHTML = '';
+      noMovesBox.style.display = 'none';
+      initBoard();
+      generatePieces();
+    }
+
+    function initBoard() {
+      boardCells.length = 0;
+      for (let i = 0; i < 64; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        board.appendChild(cell);
+        boardCells.push(cell);
+      }
+    }
+
+    function generatePieces() {
+      piecesContainer.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const piece = createRandomPiece();
+        piecesContainer.appendChild(piece);
+      }
+      checkPossibleMoves();
+    }
+
+    function createRandomPiece() {
+      const piece = document.createElement('div');
+      piece.className = 'piece';
+
+      const shapes = [
+        [[1]], [[1, 1]], [[1], [1]], [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1], [1], [1], [1]],
+        [[1, 1, 1], [0, 1, 0]], [[1, 0], [1, 1]], [[0, 1], [1, 1]],
+        [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]],
+        [[1, 1, 1], [1, 0, 0]], [[1, 1, 1], [0, 0, 1]],
+        [[1, 1, 1], [0, 1, 0]], [[1, 1, 1], [0, 0, 0]], [[1], [1], [1]]
+      ];
+
+      const colors = ['yellow', 'green', 'blue', 'red'];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      piece.dataset.shape = shape.map(row => row.join(',')).join(';');
+      piece.dataset.color = color;
+
+      shape.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.style.display = 'flex';
+        row.forEach(cell => {
+          const block = document.createElement('div');
+          block.className = 'block';
+          if (cell) block.classList.add(color);
+          rowDiv.appendChild(block);
+        });
+        piece.appendChild(rowDiv);
+      });
+
+      piece.addEventListener('pointerdown', e => {
+        draggedShape = shape;
+        draggedColor = color;
+
+        ghostPiece = piece.cloneNode(true);
+        ghostPiece.classList.add('drag-ghost');
+        document.body.appendChild(ghostPiece);
+
+        const move = ev => {
+          ghostPiece.style.left = `${ev.pageX}px`;
+          ghostPiece.style.top = `${ev.pageY}px`;
+          updateHighlights(ev);
+        };
+
+        const up = ev => {
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          tryPlacePiece(ev);
+          ghostPiece.remove();
+          ghostPiece = null;
+          clearHighlights();
+        };
+
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+
+      return piece;
+    }
+
+    function updateHighlights(e) {
+      clearHighlights();
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const index = [...board.children].indexOf(el);
+      if (index === -1) return;
+
+      const x = index % 8;
+      const y = Math.floor(index / 8);
+
+      for (let dy = 0; dy < draggedShape.length; dy++) {
+        for (let dx = 0; dx < draggedShape[dy].length; dx++) {
+          if (draggedShape[dy][dx]) {
+            const bx = x + dx;
+            const by = y + dy;
+            if (bx < 8 && by < 8) {
+              const idx = by * 8 + bx;
+              boardCells[idx].classList.add('highlight');
+            }
+          }
+        }
+      }
+    }
+
+    function clearHighlights() {
+      boardCells.forEach(cell => cell.classList.remove('highlight'));
+    }
+
+    function tryPlacePiece(e) {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const index = [...board.children].indexOf(el);
+      if (index === -1 || !draggedShape) return;
+
+      const x = index % 8;
+      const y = Math.floor(index / 8);
+
+      for (let dy = 0; dy < draggedShape.length; dy++) {
+        for (let dx = 0; dx < draggedShape[dy].length; dx++) {
+          if (draggedShape[dy][dx]) {
+            const bx = x + dx;
+            const by = y + dy;
+            if (bx >= 8 || by >= 8 || boardCells[by * 8 + bx].classList.contains('filled')) return;
+          }
+        }
+      }
+
+      for (let dy = 0; dy < draggedShape.length; dy++) {
+        for (let dx = 0; dx < draggedShape[dy].length; dx++) {
+          if (draggedShape[dy][dx]) {
+            const idx = (y + dy) * 8 + (x + dx);
+            boardCells[idx].classList.add('filled', draggedColor);
+          }
+        }
+      }
+
+      [...piecesContainer.children].forEach(child => {
+        if (child.dataset.shape === draggedShape.map(r => r.join(',')).join(';') && child.dataset.color === draggedColor) {
+          child.remove();
+        }
+      });
+
+      checkAndClearLines();
+      if (piecesContainer.children.length === 0) generatePieces();
+    }
+
+    function checkAndClearLines() {
+      let linesCleared = 0;
+
+      for (let y = 0; y < 8; y++) {
+        let full = true;
+        for (let x = 0; x < 8; x++) {
+          const idx = y * 8 + x;
+          if (!boardCells[idx].classList.contains('filled')) {
+            full = false;
+            break;
+          }
+        }
+        if (full) {
+          linesCleared++;
+          for (let x = 0; x < 8; x++) boardCells[y * 8 + x].className = 'cell';
+        }
+      }
+
+      for (let x = 0; x < 8; x++) {
+        let full = true;
+        for (let y = 0; y < 8; y++) {
+          const idx = y * 8 + x;
+          if (!boardCells[idx].classList.contains('filled')) {
+            full = false;
+            break;
+          }
+        }
+        if (full) {
+          linesCleared++;
+          for (let y = 0; y < 8; y++) boardCells[y * 8 + x].className = 'cell';
+        }
+      }
+
+      if (linesCleared > 0) {
+        score += linesCleared * 10;
+        scoreDisplay.textContent = score;
+      }
+    }
+
+    function checkPossibleMoves() {
+      const currentPieces = [...piecesContainer.children].map(p => {
+        return {
+          shape: p.dataset.shape.split(';').map(row => row.split(',').map(Number)),
+        };
+      });
+
+      const canPlace = currentPieces.some(({ shape }) => {
+        for (let y = 0; y < 8; y++) {
+          for (let x = 0; x < 8; x++) {
+            let fits = true;
+            for (let dy = 0; dy < shape.length; dy++) {
+              for (let dx = 0; dx < shape[dy].length; dx++) {
+                if (shape[dy][dx]) {
+                  const bx = x + dx;
+                  const by = y + dy;
+                  if (bx >= 8 || by >= 8 || boardCells[by * 8 + bx].classList.contains('filled')) {
+                    fits = false;
+                    break;
+                  }
+                }
+              }
+              if (!fits) break;
+            }
+            if (fits) return true;
+          }
+        }
+        return false;
+      });
+
+      if (!canPlace) noMovesBox.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
